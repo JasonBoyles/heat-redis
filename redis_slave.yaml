@@ -1,0 +1,84 @@
+heat_template_version: 2013-05-23
+
+description: |
+  This is a Heat template to deploy a single Linux server running elasticsearch.
+
+parameters:
+
+  server_flavor:
+    description: Flavor for Cloud Servers
+    type: string
+    default: 2 GB Performance
+
+  server_hostname:
+    description: Hostname for the server.
+    type: string
+    default: redis-slave
+
+  ssh_keypair_name:
+    description: Nova keypair name for ssh access to the server
+    type: string
+    default: jgbes
+
+  ssh_private_key:
+    description: private key to access the created servers
+    type: string
+
+  master_ip:
+    description: IP address of redis master server to which we are enslaved
+    type: string
+
+  redis_password:
+    description: password for HTTP basic auth
+    type: string
+
+resources:
+
+  redis_slave_server:
+    type: "Rackspace::Cloud::Server"
+    properties:
+      name: { get_param: server_hostname }
+      flavor: { get_param: server_flavor }
+      image: Ubuntu 12.04 LTS (Precise Pangolin)
+      key_name: { get_param: ssh_keypair_name }
+
+  redis_slave_setup:
+    type: "OS::Heat::ChefSolo"
+    depends_on: redis_slave_server
+    properties:
+      username: root
+      private_key: { get_param: ssh_private_key }
+      host: { get_attr: [redis_slave_server, accessIPv4] }
+      Berksfile: |
+        site :opscode
+        cookbook 'apt'
+        cookbook 'build-essential', '= 1.4.2'
+        cookbook 'rax-redis',
+          :git => 'https://github.com/JasonBoyles/rax-redis.git'
+        cookbook 'redisio',
+          :git => 'https://github.com/JasonBoyles/redisio.git',
+          :branch => '2.0.0_wip'
+      node:
+        run_list: [ "recipe[rax-redis::config_slave_sentinel]" ]
+        redisio:
+          default_settings:
+            slaveof:
+              address: { get_param: master_ip }
+              port: 6379
+            masterauth: { get_param: redis_password }
+          servers:
+            - name: slave
+              port: 6379
+          sentinels:
+            - sentinel_port: 26379
+              port: 26379
+              name: 'cluster'
+              master_ip: { get_param: master_ip }
+              master_port: 6379
+              auth-pass: { get_param: redis_password }
+              logfile: /var/log/sentinel.log
+
+outputs:
+
+  redis_slave_ip:
+    value: { get_attr: [redis_slave_server, accessIPv4] }
