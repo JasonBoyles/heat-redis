@@ -10,6 +10,18 @@ parameters:
     type: string
     default: 2 GB Performance
 
+  image_name:
+    label: Server Image
+    description: Operating system to use for created servers
+    type: string
+    default: Ubuntu 12.04 LTS (Precise Pangolin)
+    constraints:
+    - allowed_values:
+      - Ubuntu 12.04 LTS (Precise Pangolin)
+      - Ubuntu 13.10 (Saucy Salamander)
+    description: Must be a supported operating system.
+
+
   server_hostname:
     description: Hostname for the server.
     type: string
@@ -29,7 +41,7 @@ parameters:
     type: string
 
   redis_password:
-    description: password for HTTP basic auth
+    description: password for redis auth
     type: string
 
 resources:
