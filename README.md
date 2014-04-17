@@ -30,7 +30,7 @@ Here is an example of how to deploy this template using the
 ```
 heat --os-username <OS-USERNAME> --os-password <OS-PASSWORD> --os-tenant-id \
   <TENANT-ID> --os-auth-url https://identity.api.rackspacecloud.com/v2.0/ \
-  stack-create redis-cluster -f redis.yaml -P slave-node-count 2
+  stack-create redis-cluster -f redis.yaml -P slave-node-count=2
 ```
 
 * For UK customers, use `https://lon.identity.api.rackspacecloud.com/v2.0/` as
