@@ -109,13 +109,7 @@ resources:
       username: root
       private_key: { get_attr: [ssh_key, private_key] }
       host: { get_attr: [redis_master, accessIPv4] }
-      Berksfile: |
-        site :opscode
-        cookbook 'apt'
-        cookbook 'build-essential', '= 1.4.2'
-        cookbook 'redisio',
-          :git => 'https://github.com/JasonBoyles/redisio.git',
-          :branch => '2.0.0_wip'
+      kitchen: https://github.com/JasonBoyles/heat-redis.git
       node:
         run_list: [ "recipe[apt]",
                     "recipe[build-essential]",
