@@ -69,6 +69,16 @@ parameters:
     type: string
     default: redis-slave
 
+  redis_port:
+    description: port for redis servers to listen on
+    type: number
+    default: 6379
+
+  sentinel_port:
+    description: port for sentinels to listen on
+    type: number
+    default: 26379
+
 resources:
 
   ssh_key:
@@ -116,7 +126,7 @@ resources:
             requirepass: { get_attr: [redis_password, value] }
           servers:
             - name: master
-              port: 6379
+              port: { get_param: redis_port }
 
   redis_slave_nodes:
     type: "OS::Heat::ResourceGroup"
@@ -133,6 +143,8 @@ resources:
           ssh_private_key:  { get_attr: [ssh_key, private_key] }
           redis_password:   { get_attr: [redis_password, value] }
           master_ip:        { get_attr: [redis_master, accessIPv4] }
+          redis_port:       { get_param: redis_port }
+          sentinel_port:    { get_param: sentinel_port }
 
 
 outputs:
@@ -144,3 +156,7 @@ outputs:
     value: { get_attr: [redis_master, accessIPv4]}
   redis_slave_ips:
     value: { get_attr: [redis_slave_nodes, redis_slave_ip] }
+  redis_port:
+    value: { get_param: redis_port }
+  sentinel_port:
+    value: { get_param: sentinel_port }

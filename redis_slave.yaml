@@ -21,7 +21,6 @@ parameters:
       - Ubuntu 13.10 (Saucy Salamander)
     description: Must be a supported operating system.
 
-
   server_hostname:
     description: Hostname for the server.
     type: string
@@ -44,6 +43,16 @@ parameters:
     description: password for redis auth
     type: string
 
+  redis_port:
+    description: port for redis servers to listen on
+    type: number
+    default: 6379
+
+  sentinel_port:
+    description: port for sentinels to listen on
+    type: number
+    default: 26379
+
 resources:
 
   redis_slave_server:
@@ -51,7 +60,7 @@ resources:
     properties:
       name: { get_param: server_hostname }
       flavor: { get_param: server_flavor }
-      image: Ubuntu 12.04 LTS (Precise Pangolin)
+      image: { get_param: image_name }
       key_name: { get_param: ssh_keypair_name }
 
   redis_slave_setup:
@@ -75,19 +84,19 @@ resources:
         redisio:
           default_settings:
             slaveof:
-              address: { get_param: master_ip }
-              port: 6379
+              address:  { get_param: master_ip }
+              port:     { get_param: redis_port }
             masterauth: { get_param: redis_password }
           servers:
             - name: slave
-              port: 6379
+              port: { get_param: redis_port }
           sentinels:
-            - sentinel_port: 26379
-              port: 26379
+            - sentinel_port: { get_param: sentinel_port }
+              port:          { get_param: sentinel_port }
               name: 'cluster'
-              master_ip: { get_param: master_ip }
-              master_port: 6379
-              auth-pass: { get_param: redis_password }
+              master_ip:     { get_param: master_ip }
+              master_port:   { get_param: redis_port }
+              auth-pass:     { get_param: redis_password }
               logfile: /var/log/sentinel.log
 
 outputs:
