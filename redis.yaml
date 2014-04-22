@@ -45,12 +45,12 @@ parameters:
   redis_master_hostname:
     description: Hostname for nominal redis master
     type: string
-    default: redis-master
+    default: redis
 
   redis_slave_hostname:
     description: Hostname for the slaves
     type: string
-    default: redis-slave
+    default: redis
 
   ssh_keypair_name:
     description: Nova keypair name for ssh access to the servers
@@ -62,7 +62,7 @@ parameters:
     type: number
     default: 2
     constraints:
-      - range: { min: 2 }
+      - range: { min: 1 }
 
   slave_server_hostname:
     description: hostname for slave servers
@@ -113,14 +113,21 @@ resources:
       node:
         run_list: [ "recipe[apt]",
                     "recipe[build-essential]",
-                    "recipe[redisio::default]",
-                    "recipe[redisio::enable]" ]
+                    "recipe[rax-redis::config_slave_sentinel]" ]
         redisio:
           default_settings:
             requirepass: { get_attr: [redis_password, value] }
           servers:
             - name: master
               port: { get_param: redis_port }
+          sentinels:
+            - sentinel_port: { get_param: sentinel_port }
+              port:          { get_param: sentinel_port }
+              name: 'cluster'
+              master_ip:     { get_attr: [redis_master, accessIPv4] }
+              master_port:   { get_param: redis_port }
+              auth-pass:     { get_attr: [redis_password, value] }
+              logfile: /var/log/sentinel.log
 
   redis_slave_nodes:
     type: "OS::Heat::ResourceGroup"
